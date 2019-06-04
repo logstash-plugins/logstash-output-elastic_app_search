@@ -7,18 +7,23 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
   config_name "elastic_app_search"
 
   config :engine, :validate => :string, :required => true
-  config :host, :validate => :string, :required => true
+  config :host, :validate => :string
+  config :url, :validate => :string
   config :api_key, :validate => :password, :required => true
   config :timestamp_destination, :validate => :string
   config :document_id, :validate => :string
-  config :service_type, :validate => :string
+  config :path, :validate => :string, :default => "/api/as/v1/"
 
   public
   def register
-    if @service_type == "self-managed"
-      @client = Client.new(nil, @api_key.value, @host)
-    else
+    if @host.nil? && @url.nil?
+      raise ::LogStash::ConfigurationError.new("Please specify either \"url\" (for self-managed) or \"host\" (for SaaS).")
+    elsif @host && @url
+      raise ::LogStash::ConfigurationError.new("Both \"url\" or \"host\" can't be set simultaneously. Please specify either \"url\" (for self-managed) or \"host\" (for SaaS).")
+    elsif @host
       @client = Client.new(@host, @api_key.value)
+    elsif @url
+      @client = Client.new(nil, @api_key.value, @url + @path)
     end
     @client.get_engine(@engine)
   rescue => e
