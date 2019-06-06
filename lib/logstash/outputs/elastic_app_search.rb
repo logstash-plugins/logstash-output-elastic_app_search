@@ -20,6 +20,8 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
       raise ::LogStash::ConfigurationError.new("Please specify either \"url\" (for self-managed) or \"host\" (for SaaS).")
     elsif @host && @url
       raise ::LogStash::ConfigurationError.new("Both \"url\" or \"host\" can't be set simultaneously. Please specify either \"url\" (for self-managed) or \"host\" (for SaaS).")
+    elsif @host && @path
+      raise ::LogStash::ConfigurationError.new("The setting \"path\" is not compatible with \"host\". Use \"path\" only with \"url\".")
     elsif @host
       @client = Client.new(@host, @api_key.value)
     elsif @url
