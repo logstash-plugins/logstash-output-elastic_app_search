@@ -122,7 +122,7 @@ To keep the timestamp field, set this value to the name of the field where you w
   * Value type is <<string,string>>
   * There is no default value
 
-The value of the API endpoint in the form of a URL. The URL will be appended with the value of the `path` setting.
+The value of the API endpoint in the form of a URL. Note: The value of the of the `path` setting will be will be appended to this URL.
 Set this when using the https://www.elastic.co/downloads/app-search[Self-Managed Elastic App Search].
 
 [id="plugins-{type}s-{plugin}-common-options"]
