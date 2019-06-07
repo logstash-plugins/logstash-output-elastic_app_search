@@ -20,14 +20,14 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
       raise ::LogStash::ConfigurationError.new("Please specify either \"url\" (for self-managed) or \"host\" (for SaaS).")
     elsif @host && @url
       raise ::LogStash::ConfigurationError.new("Both \"url\" or \"host\" can't be set simultaneously. Please specify either \"url\" (for self-managed) or \"host\" (for SaaS).")
-    elsif @host && @path
+    elsif @host && path_is_set?  # because path has a default value we need extra work to if the user set it
       raise ::LogStash::ConfigurationError.new("The setting \"path\" is not compatible with \"host\". Use \"path\" only with \"url\".")
     elsif @host
       @client = Client.new(@host, @api_key.value)
     elsif @url
       @client = Client.new(nil, @api_key.value, @url + @path)
     end
-    @client.get_engine(@engine)
+    check_connection!
   rescue => e
     if e.message =~ /401/
       raise ::LogStash::ConfigurationError.new("Failed to connect to App Search. Error: 401. Please check your credentials")
@@ -87,5 +87,13 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
         @logger.warn("Document failed to index. Dropping..", :document => document, :errors => errors.to_a)
       end
     end
+  end
+
+  def check_connection!
+    @client.get_engine(@engine)
+  end
+
+  def path_is_set?
+    original_params.key?("path")
   end
 end

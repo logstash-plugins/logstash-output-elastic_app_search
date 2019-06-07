@@ -10,13 +10,9 @@ services:
       dockerfile: ci/unit/Dockerfile
       args:
         - ELASTIC_STACK_VERSION=$ELASTIC_STACK_VERSION
-    command: /usr/share/plugins/this/ci/unit/run.sh
+    command: /usr/share/plugins/plugin/ci/unit/run.sh
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
       LOGSTASH_SOURCE: 1
-      JARS_SKIP: "true"
       OSS: "true"
     tty: true
-    #volumes:
-    #  - ./:/usr/share/plugins/this
-
