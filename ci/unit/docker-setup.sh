@@ -4,17 +4,44 @@
 # Ensure you have Docker installed locally and set the ELASTIC_STACK_VERSION environment variable.
 set -e
 
+VERSION_URL="https://raw.githubusercontent.com/elastic/logstash/master/ci/logstash_releases.json"
+
 if [ "$ELASTIC_STACK_VERSION" ]; then
+    echo "Fetching versions from $VERSION_URL"
+    VERSIONS=$(curl $VERSION_URL)
+    if [[ "$SNAPSHOT" = "true" ]]; then
+      ELASTIC_STACK_RETRIEVED_VERSION=$(echo $VERSIONS | jq '.snapshots."'"$ELASTIC_STACK_VERSION"'"')
+      echo $ELASTIC_STACK_RETRIEVED_VERSION
+    else
+      ELASTIC_STACK_RETRIEVED_VERSION=$(echo $VERSIONS | jq '.releases."'"$ELASTIC_STACK_VERSION"'"')
+    fi
+    if [[ "$ELASTIC_STACK_RETRIEVED_VERSION" != "null" ]]; then
+      # remove starting and trailing double quotes
+      ELASTIC_STACK_RETRIEVED_VERSION="${ELASTIC_STACK_RETRIEVED_VERSION%\"}"
+      ELASTIC_STACK_RETRIEVED_VERSION="${ELASTIC_STACK_RETRIEVED_VERSION#\"}"
+      echo "Translated $ELASTIC_STACK_VERSION to ${ELASTIC_STACK_RETRIEVED_VERSION}"
+      export ELASTIC_STACK_VERSION=$ELASTIC_STACK_RETRIEVED_VERSION
+    fi
+
     echo "Testing against version: $ELASTIC_STACK_VERSION"
 
     if [[ "$ELASTIC_STACK_VERSION" = *"-SNAPSHOT" ]]; then
         cd /tmp
-        wget https://snapshots.elastic.co/docker/logstash-"$ELASTIC_STACK_VERSION".tar.gz
-        tar xfvz logstash-"$ELASTIC_STACK_VERSION".tar.gz  repositories
+
+        if [[ $ELASTIC_STACK_VERSION == 8* ]]; then
+          jq=".build.projects.logstash.packages.\"logstash-$ELASTIC_STACK_VERSION-docker-image.tar.gz\".url"
+        else
+          jq=".build.projects.\"logstash-docker\".packages.\"logstash-$ELASTIC_STACK_VERSION-docker-image.tar.gz\".url"
+        fi
+        echo "curl --silent https://artifacts-api.elastic.co/v1/versions/$ELASTIC_STACK_VERSION/builds/latest | jq -r $jq)"
+        result=$(curl --silent https://artifacts-api.elastic.co/v1/versions/$ELASTIC_STACK_VERSION/builds/latest | jq -r $jq)
+        echo $result
+        curl $result > logstash-docker-image.tar.gz
+        tar xfvz logstash-docker-image.tar.gz  repositories
         echo "Loading docker image: "
         cat repositories
-        docker load < logstash-"$ELASTIC_STACK_VERSION".tar.gz
-        rm logstash-"$ELASTIC_STACK_VERSION".tar.gz
+        docker load < logstash-docker-image.tar.gz
+        rm logstash-docker-image.tar.gz
         cd -
     fi
 
