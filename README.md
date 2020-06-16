@@ -43,6 +43,22 @@ bundle install
 bundle exec rspec
 ```
 
+#### CI in local machine
+The plugins comes with a `.ci` folder that contains Docker configurations to run on the CI, however to run it locally
+you have to a local checkout of the [CI's infrastructure project](https://github.com/logstash-plugins/.ci/) and symlink 
+some files from that into the local clone's `.ci`. Supposing you have the CI project in <CI> the steps from local clone 
+ot the plugin, are:
+- `cd .ci`
+- `ln -s <CI>/.ci/docker-setup.sh docker-setup.sh`
+- `ln -s <CI>/.ci/docker-run.sh docker-run.sh`
+- `ln -s <CI>/.ci/docker-compose.yml docker-compose.yml`
+- `ln -s <CI>/.ci/docker.env docker.env`
+
+Now export the `ELASTIC_STACK_VERSION` and setup and run docker bash scripts:
+- `export ELASTIC_STACK_VERSION=7.7.0`
+- `.ci/docker-setup.sh` 
+- `.ci/docker-run.sh` 
+
 ### 2. Running your unpublished Plugin in Logstash
 
 #### 2.1 Run in a local Logstash clone
