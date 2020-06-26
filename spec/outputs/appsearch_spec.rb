@@ -40,18 +40,4 @@ describe LogStash::Outputs::ElasticAppSearch do
       end
     end
   end
-
-  describe "real local test" do
-    let(:api_key_settings) {
-      {
-        :private => ENV['APPSEARCH_PRIVATE_KEY'],
-        :search => ENV['APPSEARCH_SEARCH_KEY']
-      }
-    }
-
-    it "setup apikeys" do
-      expect(api_key_settings[:private]).to start_with("private-")
-      expect(api_key_settings[:search]).to start_with("search-")
-    end
-  end
 end
