@@ -1,3 +1,7 @@
+## 1.1.0
+  - Switched AppSearch client library from Java to Ruby [#12](https://github.com/logstash-plugins/logstash-output-elastic_app_search/issues/12)
+  - Covered with integration tests and dockerized local AppSearch server instance.
+
 ## 1.0.0
   - Added support for On Premise installations of Elastic App Search
   - Updated java client to 0.4.1

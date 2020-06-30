@@ -1,7 +1,6 @@
 # encoding: utf-8
 require "logstash/outputs/base"
-require 'logstash-output-elastic_app_search_jars.rb'
-java_import com.swiftype.appsearch.Client
+require "elastic-app-search"
 
 class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
   config_name "elastic_app_search"
@@ -23,9 +22,9 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
     elsif @host && path_is_set?  # because path has a default value we need extra work to if the user set it
       raise ::LogStash::ConfigurationError.new("The setting \"path\" is not compatible with \"host\". Use \"path\" only with \"url\".")
     elsif @host
-      @client = Client.new(@host, @api_key.value)
+      @client = Elastic::AppSearch::Client.new(:host_identifier => @host, :api_key => @api_key.value)
     elsif @url
-      @client = Client.new(nil, @api_key.value, @url + @path)
+      @client = Elastic::AppSearch::Client.new(:api_endpoint => @url + @path, :api_key => @api_key.value)
     end
     check_connection!
   rescue => e
