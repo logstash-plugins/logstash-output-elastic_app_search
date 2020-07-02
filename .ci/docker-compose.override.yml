@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+
+  logstash:
+    command: /usr/share/plugins/plugin/.ci/logstash-run.sh
+    build:
+      args:
+        - ELASTIC_STACK_VERSION=$ELASTIC_STACK_VERSION
+        - DISTRIBUTION=${DISTRIBUTION:-default}
+        - DISTRIBUTION_SUFFIX=${DISTRIBUTION_SUFFIX}
+    environment:
+      - DISTRIBUTION=${DISTRIBUTION:-default}
+      - DISTRIBUTION_SUFFIX=${DISTRIBUTION_SUFFIX}
+      - INTEGRATION=${INTEGRATION:-false}
+      - SECURE_INTEGRATION=${SECURE_INTEGRATION:-false}
+
+  elasticsearch:
+    build:
+      context: ../
+      dockerfile: .ci/Dockerfile.elasticsearch
+      args:
+        - ELASTIC_STACK_VERSION=$ELASTIC_STACK_VERSION
+        - DISTRIBUTION_SUFFIX=${DISTRIBUTION_SUFFIX}
+    user: elasticsearch
+    environment:
+      - cluster.name=es-cluster
+      - node.name=es-node
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.license.self_generated.type=trial
+      - xpack.security.authc.api_key.enabled=true
+      - ELASTIC_PASSWORD=password
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9200:9200
+#    networks: ['stack']
+
+  appsearch:
+    build:
+      context: ../
+      dockerfile: .ci/Dockerfile.appsearch
+      args:
+        - ELASTIC_APPSEARCH_VERSION=$ELASTIC_STACK_VERSION
+        - DISTRIBUTION_SUFFIX=${DISTRIBUTION_SUFFIX}
+    environment:
+      - elasticsearch.host=http://elasticsearch:9200
+      - elasticsearch.password=password
+      - ENT_SEARCH_DEFAULT_PASSWORD=password
+      - secret_management.encryption_keys=[changeme]
+      - allow_es_settings_modification=true
+    ports:
+      - 3002:3002
+
