@@ -45,9 +45,9 @@ bundle exec rspec
 
 #### CI in local machine
 The plugins comes with a `.ci` folder that contains Docker configurations to run on the CI, however to run it locally
-you have to a local checkout of the [CI's infrastructure project](https://github.com/logstash-plugins/.ci/) and symlink 
-some files from that into the local clone's `.ci`. Supposing you have the CI project in <CI> the steps from local clone 
-ot the plugin, are:
+you have to checkout the [CI's infrastructure project](https://github.com/logstash-plugins/.ci/) and symlink 
+some files from that into the local clone's `.ci`. Supposing you have the CI project in <CI>, the steps from local clone 
+of the plugin are:
 - `cd .ci`
 - `ln -s <CI>/.ci/docker-setup.sh docker-setup.sh`
 - `ln -s <CI>/.ci/docker-run.sh docker-run.sh`
