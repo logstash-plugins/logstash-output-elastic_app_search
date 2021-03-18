@@ -1,4 +1,4 @@
-## 1.1.2
+## 1.2.0
   - Changed evaluation of `engine` option to use event's sprintf format, [#25](https://github.com/logstash-plugins/logstash-output-elastic_app_search/pull/25)
 
 ## 1.1.1
