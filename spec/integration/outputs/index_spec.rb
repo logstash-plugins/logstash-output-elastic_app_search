@@ -48,6 +48,22 @@ describe "indexing against running AppSearch", :integration => true do
     end
   end
 
+  describe "register" do
+    let(:config) do
+      {
+        "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+        "engine" => "%{engine_name_field}",
+        "url" => "http://appsearch:3002"
+      }
+    end
+
+    context "when engine is defined in sprintf format" do
+      it "does not raise an error" do
+        expect { subject.register }.to_not raise_error
+      end
+    end
+  end
+
   describe "indexing" do
 
     before do
@@ -68,6 +84,31 @@ describe "indexing against running AppSearch", :integration => true do
           parsed_resp["results"]
         end
         expect(results.first.dig("message", "raw")).to eq "an event to index"
+      end
+
+      context "using sprintf-ed engine" do
+        let(:config) do
+          {
+            "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+            "engine" => "%{engine_name_field}",
+            "url" => "http://appsearch:3002"
+          }
+        end
+
+        let(:event) { LogStash::Event.new("message" => "an event to index", "engine_name_field" => engine_name) }
+
+        it "should be indexed" do
+          app_search_output.multi_receive([event])
+
+          results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+            attempt_response = execute_search_call(engine_name)
+            expect(attempt_response.status).to eq(200)
+            parsed_resp = JSON.parse(attempt_response.body)
+            expect(parsed_resp.dig("meta", "page", "total_pages")).to eq(1)
+            parsed_resp["results"]
+          end
+          expect(results.first.dig("message", "raw")).to eq "an event to index"
+        end
       end
     end
 

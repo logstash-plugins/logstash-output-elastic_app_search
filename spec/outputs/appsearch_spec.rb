@@ -39,5 +39,12 @@ describe LogStash::Outputs::ElasticAppSearch do
         expect { subject.register }.to raise_error(LogStash::ConfigurationError)
       end
     end
+    context "when engine is in sprintf format" do
+      let(:config) { { "host" => host, "api_key" => api_key, "engine" => "%{type}" } }
+      it "connection is not checked" do
+        expect { subject.register }.to_not raise_error
+        expect(subject).not_to receive(:check_connection!)
+      end
+    end
   end
 end

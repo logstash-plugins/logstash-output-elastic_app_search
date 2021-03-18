@@ -26,7 +26,7 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
     elsif @url
       @client = Elastic::AppSearch::Client.new(:api_endpoint => @url + @path, :api_key => @api_key.value)
     end
-    check_connection!
+    check_connection! unless @engine =~ /.*%\{.+\}.*/
   rescue => e
     if e.message =~ /401/
       raise ::LogStash::ConfigurationError.new("Failed to connect to App Search. Error: 401. Please check your credentials")
@@ -51,7 +51,8 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
 
   private
   def format_batch(events)
-    events.map do |event|
+    docs_for_engine = {}
+    events.each do |event|
       doc = event.to_hash
       # we need to remove default fields that start with "@"
       # since Elastic App Search doesn't accept them
@@ -64,13 +65,18 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
         doc["id"] = event.sprintf(@document_id)
       end
       doc.delete("@version")
-      doc
+      resolved_engine = event.sprintf(@engine)
+      docs_for_engine[resolved_engine] = [] unless docs_for_engine[resolved_engine]
+      docs_for_engine[resolved_engine] << doc
     end
+    docs_for_engine
   end
 
-  def index(documents)
-    response = @client.index_documents(@engine, documents)
-    report(documents, response)
+  def index(batch)
+    batch.each do |resolved_engine, documents|
+      response = @client.index_documents(resolved_engine, documents)
+      report(documents, response)
+    end
   rescue => e
     @logger.error("Failed to execute index operation. Retrying..", :exception => e.class, :reason => e.message)
     sleep(1)
