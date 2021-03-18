@@ -1,5 +1,5 @@
 ## 1.1.2
-  - Changed evaluation of `engine` option to use event's sprintf format
+  - Changed evaluation of `engine` option to use event's sprintf format, [#25](https://github.com/logstash-plugins/logstash-output-elastic_app_search/pull/25)
 
 ## 1.1.1
   - Added missed dependency (elastic-app-search) to the gemspec, fixes issue [#17](https://github.com/logstash-plugins/logstash-output-elastic_app_search/issues/17)
