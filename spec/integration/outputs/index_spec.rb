@@ -126,14 +126,8 @@ describe "indexing against running AppSearch", :integration => true do
 
         it "all should be indexed" do
           app_search_output.multi_receive(events)
-          results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
-            attempt_response = execute_search_call(engine_name)
-            expect(attempt_response.status).to eq(200)
-            parsed_resp = JSON.parse(attempt_response.body)
-            expect(parsed_resp.dig("meta", "page", "total_results")).to eq(200)
-            parsed_resp["results"]
-          end
-          expect(results.first.dig("message", "raw")).to start_with("an event to index")
+
+          expect_indexed(engine_name, 200)
         end
       end
 
@@ -155,26 +149,24 @@ describe "indexing against running AppSearch", :integration => true do
 
          app_search_output.multi_receive(events)
 
-         results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
-           attempt_response = execute_search_call('testengin1')
-           expect(attempt_response.status).to eq(200)
-           parsed_resp = JSON.parse(attempt_response.body)
-           expect(parsed_resp.dig("meta", "page", "total_results")).to eq(100)
-           parsed_resp["results"]
-         end
-
-         results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
-           attempt_response = execute_search_call('testengin2')
-           expect(attempt_response.status).to eq(200)
-           parsed_resp = JSON.parse(attempt_response.body)
-           expect(parsed_resp.dig("meta", "page", "total_results")).to eq(100)
-           parsed_resp["results"]
-         end
+         expect_indexed('testengin1', 100)
+         expect_indexed('testengin2', 100)
         end
       end
     end
 
     private
+    def expect_indexed(engine_name, expected_docs_count)
+      results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+        attempt_response = execute_search_call(engine_name)
+        expect(attempt_response.status).to eq(200)
+        parsed_resp = JSON.parse(attempt_response.body)
+        expect(parsed_resp.dig("meta", "page", "total_results")).to eq(expected_docs_count)
+        parsed_resp["results"]
+      end
+      expect(results.first.dig("message", "raw")).to start_with("an event to index")
+    end
+
     def generate_events(num_events, engine_name = nil)
       (1..num_events).map do |i|
         if engine_name
