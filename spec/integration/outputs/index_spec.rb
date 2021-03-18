@@ -121,24 +121,68 @@ describe "indexing against running AppSearch", :integration => true do
     end
 
     describe "multiple events" do
-      let(:events) { generate_events(200) } #2 times the slice size used to batch
+      context "single static engine" do
+        let(:events) { generate_events(200) } #2 times the slice size used to batch
 
-      it "all should be indexed" do
-        app_search_output.multi_receive(events)
-        results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
-          attempt_response = execute_search_call(engine_name)
-          expect(attempt_response.status).to eq(200)
-          parsed_resp = JSON.parse(attempt_response.body)
-          expect(parsed_resp.dig("meta", "page", "total_results")).to eq(200)
-          parsed_resp["results"]
+        it "all should be indexed" do
+          app_search_output.multi_receive(events)
+          results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+            attempt_response = execute_search_call(engine_name)
+            expect(attempt_response.status).to eq(200)
+            parsed_resp = JSON.parse(attempt_response.body)
+            expect(parsed_resp.dig("meta", "page", "total_results")).to eq(200)
+            parsed_resp["results"]
+          end
+          expect(results.first.dig("message", "raw")).to start_with("an event to index")
         end
-        expect(results.first.dig("message", "raw")).to start_with("an event to index")
+      end
+
+      context "multiple sprintf engines" do
+        let(:config) do
+          {
+            "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+            "engine" => "%{engine_name_field}",
+            "url" => "http://appsearch:3002"
+          }
+        end
+
+        it "all should be indexed" do
+         create_engine('testengin1', "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
+         create_engine('testengin2', "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
+         events = generate_events(100, 'testengin1')
+         events + generate_events(100, 'testengin2')
+         events.shuffle!
+
+         app_search_output.multi_receive(events)
+
+         results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+           attempt_response = execute_search_call('testengin1')
+           expect(attempt_response.status).to eq(200)
+           parsed_resp = JSON.parse(attempt_response.body)
+           expect(parsed_resp.dig("meta", "page", "total_results")).to eq(100)
+           parsed_resp["results"]
+         end
+
+         results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+           attempt_response = execute_search_call('testengin2')
+           expect(attempt_response.status).to eq(200)
+           parsed_resp = JSON.parse(attempt_response.body)
+           expect(parsed_resp.dig("meta", "page", "total_results")).to eq(100)
+           parsed_resp["results"]
+         end
+        end
       end
     end
 
     private
-    def generate_events(num_events)
-      (1..num_events).map { |i| LogStash::Event.new("message" => "an event to index #{i}")}
+    def generate_events(num_events, engine_name = nil)
+      (1..num_events).map do |i|
+        if engine_name
+          LogStash::Event.new("message" => "an event to index #{i}", "engine_name_field" => engine_name)
+        else
+          LogStash::Event.new("message" => "an event to index #{i}")
+        end
+      end
     end
   end
 end
