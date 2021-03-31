@@ -144,7 +144,7 @@ describe "indexing against running AppSearch", :integration => true do
          create_engine('testengin1', "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
          create_engine('testengin2', "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
          events = generate_events(100, 'testengin1')
-         events + generate_events(100, 'testengin2')
+         events += generate_events(100, 'testengin2')
          events.shuffle!
 
          app_search_output.multi_receive(events)

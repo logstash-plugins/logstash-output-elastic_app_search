@@ -66,7 +66,14 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
       end
       doc.delete("@version")
       resolved_engine = event.sprintf(@engine)
-      docs_for_engine[resolved_engine] = [] unless docs_for_engine[resolved_engine]
+      #docs_for_engine[resolved_engine] = [] unless docs_for_engine[resolved_engine]
+      unless docs_for_engine[resolved_engine]
+        if @logger.trace?
+          @logger.trace("Creating new engine segment in batch to send", :resolved_engine => resolved_engine)
+        end
+        docs_for_engine[resolved_engine] = []
+      end
+      eng_name_field = event.get("engine_name_field")
       docs_for_engine[resolved_engine] << doc
     end
     docs_for_engine
