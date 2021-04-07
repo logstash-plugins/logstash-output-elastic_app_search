@@ -13,6 +13,8 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
   config :document_id, :validate => :string
   config :path, :validate => :string, :default => "/api/as/v1/"
 
+  ENGINE_WITH_SPRINTF_REGEX = /.*%\{.+\}.*/
+
   public
   def register
     if @host.nil? && @url.nil?
@@ -26,7 +28,7 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
     elsif @url
       @client = Elastic::AppSearch::Client.new(:api_endpoint => @url + @path, :api_key => @api_key.value)
     end
-    check_connection! unless @engine =~ /.*%\{.+\}.*/
+    check_connection! unless @engine =~ ENGINE_WITH_SPRINTF_REGEX
   rescue => e
     if e.message =~ /401/
       raise ::LogStash::ConfigurationError.new("Failed to connect to App Search. Error: 401. Please check your credentials")
@@ -79,13 +81,18 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
 
   def index(batch)
     batch.each do |resolved_engine, documents|
-      response = @client.index_documents(resolved_engine, documents)
-      report(documents, response)
+      begin
+        if resolved_engine =~ ENGINE_WITH_SPRINTF_REGEX || resolved_engine =~ /\s*/
+          raise "Engine field name #{@engine} doesn't exists or resolves to empty string"
+        end
+        response = @client.index_documents(resolved_engine, documents)
+        report(documents, response)
+      rescue => e
+        @logger.error("Failed to execute index operation. Retrying..", :exception => e.class, :reason => e.message)
+        sleep(1)
+        retry
+      end
     end
-  rescue => e
-    @logger.error("Failed to execute index operation. Retrying..", :exception => e.class, :reason => e.message)
-    sleep(1)
-    retry
   end
 
   def report(documents, response)
