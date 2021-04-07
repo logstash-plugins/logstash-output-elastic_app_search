@@ -84,6 +84,35 @@ like `myapp-%{sequence_id}`. Reusing ids will cause documents to be rewritten.
   * There is no default value
 
 The Engine name. Engine is your search engine created in App Search, an information repository that includes the indexed document records.
+Engine field also support `sprintf` format, so a valid name could be `engine-%{eng_level}`, in this case the engine
+value is resolved at runtime, event by event; dynamic resolution could lead to invalid engine names in which case
+the documents to be stored generate a warning and exert backpressure, this could happens if the field used in the `sprintf`
+expression doesn't exist or if the resolved engine name is not configured in the EnterpriseSearch service.
+To control and limit such corner cases a default engine could be set to a default value configuring a last filter in the pipeline
+to assign it, as example consider:
+
+[source,ruby]
+----------------------------------
+input {
+  stdin {
+    codec => json
+  }
+}
+
+filter {
+  if ![engine_name] {
+    mutate {
+      add_field => {"engine_name" => "default"}
+    }
+  }
+}
+
+output {
+  appsearch {
+    engine => "engine_%{[engine_name]}"
+  }
+}
+----------------------------------
 
 [id="plugins-{type}s-{plugin}-host"]
 ===== `host`
