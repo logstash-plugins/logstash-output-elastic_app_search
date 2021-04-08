@@ -13,7 +13,7 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
   config :document_id, :validate => :string
   config :path, :validate => :string, :default => "/api/as/v1/"
 
-  ENGINE_WITH_SPRINTF_REGEX = /.*%\{.+\}.*/
+  ENGINE_WITH_SPRINTF_REGEX = /^.*%\{.+\}.*$/
 
   public
   def register
@@ -82,7 +82,7 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
   def index(batch)
     batch.each do |resolved_engine, documents|
       begin
-        if resolved_engine =~ ENGINE_WITH_SPRINTF_REGEX || resolved_engine =~ /\s*/
+        if resolved_engine =~ ENGINE_WITH_SPRINTF_REGEX || resolved_engine =~ /^\s*$/
           raise "Engine field name #{@engine} doesn't exists or resolves to empty string"
         end
         response = @client.index_documents(resolved_engine, documents)
