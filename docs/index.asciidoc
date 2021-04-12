@@ -84,12 +84,15 @@ like `myapp-%{sequence_id}`. Reusing ids will cause documents to be rewritten.
   * There is no default value
 
 The Engine name. Engine is your search engine created in App Search, an information repository that includes the indexed document records.
-Engine field also support `sprintf` format, so a valid name could be `engine-%{eng_level}`, in this case the engine
-value is resolved at runtime, event by event; dynamic resolution could lead to invalid engine names in which case
-the documents to be stored generate a warning and exert backpressure, this could happens if the field used in the `sprintf`
-expression doesn't exist or if the resolved engine name is not configured in the EnterpriseSearch service.
-To control and limit such corner cases a default engine could be set to a default value configuring a last filter in the pipeline
-to assign it, as example consider:
+Engine field also support {logstash-ref}/event-dependent-configuration.html#sprintf[sprintf format], to enable
+the engine name to be derived from a field value from each event, for example `engine-%{engine_name}`.
+
+Caution:
+Invalid engine names will cause ingestion to be halted until the field value can be resolved into a valid engine name.
+This be caused by either the field value being interpolated resolving to a value without a matching engine,
+or, if the field is missing from the event, to not be resolved at all.
+To catch errors where the field is missing from the event, it may be advisable to add a "default" engine type
+and handle it in the configuration, eg:
 
 [source,ruby]
 ----------------------------------
