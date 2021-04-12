@@ -83,12 +83,13 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
     batch.each do |resolved_engine, documents|
       begin
         if resolved_engine =~ ENGINE_WITH_SPRINTF_REGEX || resolved_engine =~ /^\s*$/
-          raise "Engine field name #{@engine} doesn't exists or resolves to empty string"
+          raise "Cannot resolve engine field name #{@engine} from event"
         end
         response = @client.index_documents(resolved_engine, documents)
         report(documents, response)
       rescue => e
-        @logger.error("Failed to execute index operation. Retrying..", :exception => e.class, :reason => e.message)
+        @logger.error("Failed to execute index operation. Retrying..", :exception => e.class, :reason => e.message,
+                      :resolved_engine => resolved_engine)
         sleep(1)
         retry
       end
