@@ -5,7 +5,7 @@ require "logstash/codecs/plain"
 require "logstash/event"
 require "json"
 
-describe "indexing against running AppSearch", :integration => true do
+describe "indexing against running App Search", :integration => true do
 
   let(:engine_name) do
     (0...10).map { ('a'..'z').to_a[rand(26)] }.join
@@ -13,16 +13,16 @@ describe "indexing against running AppSearch", :integration => true do
 
   let(:config) do
     {
-      "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+      "api_key" => ENV['APP_SEARCH_PRIVATE_KEY'],
       "engine" => engine_name,
-      "url" => "http://appsearch:3002"
+      "url" => "http://enterprise_search:3002"
     }
   end
 
   subject(:app_search_output) { LogStash::Outputs::ElasticAppSearch.new(config) }
 
   before(:each) do
-    create_engine(engine_name, "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
+    create_engine(engine_name, "http://enterprise_search:3002", ENV['APP_SEARCH_PRIVATE_KEY'])
   end
 
   private
@@ -37,8 +37,8 @@ describe "indexing against running AppSearch", :integration => true do
   describe "search and private keys are configured" do
     let(:api_key_settings) do
       {
-        :private => ENV['APPSEARCH_PRIVATE_KEY'],
-        :search => ENV['APPSEARCH_SEARCH_KEY']
+        :private => ENV['APP_SEARCH_PRIVATE_KEY'],
+        :search => ENV['APP_SEARCH_SEARCH_KEY']
       }
     end
 

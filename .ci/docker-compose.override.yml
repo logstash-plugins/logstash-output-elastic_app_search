@@ -40,12 +40,12 @@ services:
       - 9200:9200
 #    networks: ['stack']
 
-  appsearch:
+  enterprise_search:
     build:
       context: ../
-      dockerfile: .ci/Dockerfile.appsearch
+      dockerfile: .ci/Dockerfile.enterprise_search
       args:
-        - ELASTIC_APPSEARCH_VERSION=$ELASTIC_STACK_VERSION
+        - ELASTIC_ENTERPRISE_SEARCH_VERSION=$ELASTIC_STACK_VERSION
         - DISTRIBUTION_SUFFIX=${DISTRIBUTION_SUFFIX}
     environment:
       - elasticsearch.host=http://elasticsearch:9200

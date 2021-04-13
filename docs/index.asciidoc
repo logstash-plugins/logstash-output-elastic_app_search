@@ -21,8 +21,8 @@ include::{include_path}/plugin_header.asciidoc[]
 
 ==== Description
 
-This output lets you send events to the Elastic App Search solution, 
-both the https://www.elastic.co/downloads/app-search[self-managed] or 
+This output lets you send events to the Elastic App Search solution,
+both the https://www.elastic.co/downloads/app-search[self-managed] or
 the https://www.elastic.co/cloud/app-search-service[managed] service.
 On receiving a batch of events from the Logstash pipeline, the plugin
 converts the events into documents and uses the App Search bulk API
@@ -38,7 +38,7 @@ to store the timestamp in a different field.
 NOTE: This gem does not support codec customization.
 
 [id="plugins-{type}s-{plugin}-options"]
-==== AppSearch Output Configuration Options
+==== App Search Output Configuration Options
 
 This plugin supports the following configuration options plus the
  <<plugins-{type}s-{plugin}-common-options>> described later.
@@ -108,11 +108,11 @@ The path that is appended to the `url` parameter when connecting to a https://ww
   * Value type is <<string,string>>
   * There is no default value
 
-Where to move the value from the `@timestamp` field. 
+Where to move the value from the `@timestamp` field.
 
 All Logstash events contain a `@timestamp` field.
-App Search doesn't support fields starting with `@timestamp`, and 
-by default, the `@timestamp` field will be deleted. 
+App Search doesn't support fields starting with `@timestamp`, and
+by default, the `@timestamp` field will be deleted.
 
 To keep the timestamp field, set this value to the name of the field where you want `@timestamp` copied.
 

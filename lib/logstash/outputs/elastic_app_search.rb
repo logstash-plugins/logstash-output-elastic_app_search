@@ -43,7 +43,7 @@ class LogStash::Outputs::ElasticAppSearch < LogStash::Outputs::Base
     events.each_slice(100) do |events|
       batch = format_batch(events)
       if @logger.trace?
-        @logger.trace("Sending bulk to AppSearch", :size => batch.size, :data => batch.inspect)
+        @logger.trace("Sending bulk to App Search", :size => batch.size, :data => batch.inspect)
       end
       index(batch)
     end
