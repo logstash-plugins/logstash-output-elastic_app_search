@@ -11,3 +11,4 @@ if Dir.exist?(logstash_path) && use_logstash_source
 end
 
 gem 'elastic-app-search', '~>7.8.0'
+gem 'elastic-workplace-search', '~>0.4.1'
