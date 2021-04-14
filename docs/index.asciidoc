@@ -83,7 +83,8 @@ like `myapp-%{sequence_id}`. Reusing ids will cause documents to be rewritten.
   * Value type is <<string,string>>
   * There is no default value
 
-The Engine name. Engine is your search engine created in App Search, an information repository that includes the indexed document records.
+The name of the search engine you created in App Search, an information
+repository that includes the indexed document records.
 The `engine` field supports
 {logstash-ref}/event-dependent-configuration.html#sprintf[sprintf format] to
 allow the engine name to be derived from a field value from each event, for
