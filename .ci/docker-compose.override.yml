@@ -50,9 +50,9 @@ services:
     environment:
       - elasticsearch.host=http://elasticsearch:9200
       - elasticsearch.password=password
+      - elasticsearch.startup_retry.interval=30
       - ENT_SEARCH_DEFAULT_PASSWORD=password
       - secret_management.encryption_keys=[changeme]
       - allow_es_settings_modification=true
     ports:
       - 3002:3002
-

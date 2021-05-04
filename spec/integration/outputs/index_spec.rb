@@ -48,6 +48,22 @@ describe "indexing against running AppSearch", :integration => true do
     end
   end
 
+  describe "register" do
+    let(:config) do
+      {
+        "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+        "engine" => "%{engine_name_field}",
+        "url" => "http://appsearch:3002"
+      }
+    end
+
+    context "when engine is defined in sprintf format" do
+      it "does not raise an error" do
+        expect { subject.register }.to_not raise_error
+      end
+    end
+  end
+
   describe "indexing" do
 
     before do
@@ -69,6 +85,31 @@ describe "indexing against running AppSearch", :integration => true do
         end
         expect(results.first.dig("message", "raw")).to eq "an event to index"
       end
+
+      context "using sprintf-ed engine" do
+        let(:config) do
+          {
+            "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+            "engine" => "%{engine_name_field}",
+            "url" => "http://appsearch:3002"
+          }
+        end
+
+        let(:event) { LogStash::Event.new("message" => "an event to index", "engine_name_field" => engine_name) }
+
+        it "should be indexed" do
+          app_search_output.multi_receive([event])
+
+          results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+            attempt_response = execute_search_call(engine_name)
+            expect(attempt_response.status).to eq(200)
+            parsed_resp = JSON.parse(attempt_response.body)
+            expect(parsed_resp.dig("meta", "page", "total_pages")).to eq(1)
+            parsed_resp["results"]
+          end
+          expect(results.first.dig("message", "raw")).to eq "an event to index"
+        end
+      end
     end
 
     private
@@ -80,24 +121,60 @@ describe "indexing against running AppSearch", :integration => true do
     end
 
     describe "multiple events" do
-      let(:events) { generate_events(200) } #2 times the slice size used to batch
+      context "single static engine" do
+        let(:events) { generate_events(200) } #2 times the slice size used to batch
 
-      it "all should be indexed" do
-        app_search_output.multi_receive(events)
-        results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
-          attempt_response = execute_search_call(engine_name)
-          expect(attempt_response.status).to eq(200)
-          parsed_resp = JSON.parse(attempt_response.body)
-          expect(parsed_resp.dig("meta", "page", "total_results")).to eq(200)
-          parsed_resp["results"]
+        it "all should be indexed" do
+          app_search_output.multi_receive(events)
+
+          expect_indexed(engine_name, 200)
         end
-        expect(results.first.dig("message", "raw")).to start_with("an event to index")
+      end
+
+      context "multiple sprintf engines" do
+        let(:config) do
+          {
+            "api_key" => ENV['APPSEARCH_PRIVATE_KEY'],
+            "engine" => "%{engine_name_field}",
+            "url" => "http://appsearch:3002"
+          }
+        end
+
+        it "all should be indexed" do
+         create_engine('testengin1', "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
+         create_engine('testengin2', "http://appsearch:3002", ENV['APPSEARCH_PRIVATE_KEY'])
+         events = generate_events(100, 'testengin1')
+         events += generate_events(100, 'testengin2')
+         events.shuffle!
+
+         app_search_output.multi_receive(events)
+
+         expect_indexed('testengin1', 100)
+         expect_indexed('testengin2', 100)
+        end
       end
     end
 
     private
-    def generate_events(num_events)
-      (1..num_events).map { |i| LogStash::Event.new("message" => "an event to index #{i}")}
+    def expect_indexed(engine_name, expected_docs_count)
+      results = Stud.try(20.times, RSpec::Expectations::ExpectationNotMetError) do
+        attempt_response = execute_search_call(engine_name)
+        expect(attempt_response.status).to eq(200)
+        parsed_resp = JSON.parse(attempt_response.body)
+        expect(parsed_resp.dig("meta", "page", "total_results")).to eq(expected_docs_count)
+        parsed_resp["results"]
+      end
+      expect(results.first.dig("message", "raw")).to start_with("an event to index")
+    end
+
+    def generate_events(num_events, engine_name = nil)
+      (1..num_events).map do |i|
+        if engine_name
+          LogStash::Event.new("message" => "an event to index #{i}", "engine_name_field" => engine_name)
+        else
+          LogStash::Event.new("message" => "an event to index #{i}")
+        end
+      end
     end
   end
 end
