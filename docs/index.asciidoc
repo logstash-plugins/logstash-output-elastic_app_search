@@ -38,7 +38,7 @@ to store the timestamp in a different field.
 NOTE: This gem does not support codec customization.
 
 [id="plugins-{type}s-{plugin}-options"]
-==== AppSearch Output Configuration Options
+==== App Search Output Configuration Options
 
 This plugin supports the following configuration options plus the
  <<plugins-{type}s-{plugin}-common-options>> described later.
